@@ -50,7 +50,7 @@ qjackctl &
 
 2/ run `carla`, and setup the plugins :
 
-![carla screenshot][./misc/carla_screenshot.png]
+![carla screenshot](misc/carla_screenshot.png)
 
 The screenshot shows the 'AutoPitch' plugin wired from the mic input and into the speakers. In this configuration the plugin is applied 'live' on my voice, leading to a lot of fun.
 
