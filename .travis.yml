@@ -1,0 +1,13 @@
+language: cpp
+dist: focal
+compiler: gcc
+
+addons:
+  apt:
+    packages:
+    - cmake
+    - lv2-dev
+
+script: 
+  - mkdir -p build && cd build && cmake .. && cmake --build .
+
