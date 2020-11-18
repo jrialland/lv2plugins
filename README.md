@@ -1,4 +1,6 @@
 
+[![Build Status](https://travis-ci.org/jrialland/lv2plugins.svg?branch=main)](https://travis-ci.org/jrialland/lv2plugins)
+
 A collection of audio plugins using the [LV2](https://lv2plug.in/) (aka LADSPA version 2) standard.
 
 
