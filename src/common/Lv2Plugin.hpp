@@ -17,7 +17,11 @@ class Lv2Plugin {
   
   std::vector<Lv2Port> ports;
 
-  double sample_rate;
+  double sample_rate = .0;
+
+  int nsamples = 0;
+
+  double time_ms = .0;
 
   public:
 
@@ -38,7 +42,11 @@ class Lv2Plugin {
 
   virtual void activate();
   
-  virtual void run(uint32_t n_samples);
+  void _run(uint32_t nsamples);
+
+  virtual void nsamples_changed(uint32_t old_nsamples, uint32_t nsamples);
+
+  virtual void run(uint32_t nsamples);
   
   virtual void deactivate();
 
@@ -69,7 +77,7 @@ void plugin_activate(LV2_Handle h) {  \
   \
 void plugin_run(LV2_Handle h, uint32_t n) {  \
   Lv2Plugin *plugin = static_cast<Lv2Plugin*>(h);\
-  plugin->run(n);\
+  plugin->_run(n);\
 }  \
   \
 void plugin_deactivate(LV2_Handle h) {  \
