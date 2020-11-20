@@ -7,6 +7,7 @@ addons:
     packages:
     - cmake
     - lv2-dev
+    - qt5-default
 
 script: 
   - mkdir -p build && cd build && cmake .. && cmake --build .
