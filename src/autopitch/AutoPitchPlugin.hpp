@@ -1,32 +1,40 @@
 #pragma once
-#include "common/Lv2Plugin.hpp"
-using namespace lv2cpp;
 
 #include "PitchDetector.hpp"
 #include "PitchShifter.hpp"
+#include "common-audio/Lv2AudioPlugin.hpp"
 
-class AutoPitchPlugin : public Lv2Plugin {
-    
-    PitchDetector *pitchDetector;
-    
-    PitchShifter *pitchShifter;
+/**
+ * This audio plugin detects the pitch of a voice and tries to
+ * modify it in order to correspond to a note in a scale
+ *
+ * @lv2cpp.meta {
+ *    "uri" : "https://github.com/jrialland/lv2plugins/autopitch",
+ *    "plugin_type" : "audio",
+ *    "description" : "Automatic pitch correction",
+ *    "ports" : [
+ *      {"type":"AUDIO_IN", "symbol":"in", "name":"Audio In"},
+ *      {"type":"AUDIO_OUT", "symbol":"out", "name":"Audio Out"}
+ *    ],
+ *    "ui" : "https://github.com/jrialland/lv2plugins/autopitch#UI"
+ * }
+ */
+class AutoPitchPlugin : public lv2cpp::Lv2AudioPlugin {
 
-    float correction = 1.0;
+  PitchDetector *pitchDetector;
 
-    public:
+  PitchShifter *pitchShifter;
 
-        AutoPitchPlugin();
+  float correction = 1.0;
 
-        ~AutoPitchPlugin();
+public:
+  AutoPitchPlugin();
 
-        void set_sample_rate(double rate) override;
+  ~AutoPitchPlugin();
 
-        void activate() override;
+  void set_sample_rate(double rate) override;
 
-        void run(uint32_t nsamples) override;
+  void activate() override;
+
+  void run(uint32_t nsamples) override;
 };
-
-DECLARE_PLUGIN("https://github.com/jrialland/lv2plugins/autopitch", AutoPitchPlugin);
-PLUGIN_DESCRIPTION("https://github.com/jrialland/lv2plugins/autopitch", "Automatic pitch correction");
-PLUGIN_ADD_PORT("https://github.com/jrialland/lv2plugins/autopitch", 0, "AUDIO_IN", "In")
-PLUGIN_ADD_PORT("https://github.com/jrialland/lv2plugins/autopitch", 1, "AUDIO_OUT", "Out")

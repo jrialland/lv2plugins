@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 import os, sys, re, glob, logging
 import json
+from urllib.parse import urlparse
 
 
-re_declare = re.compile(r'DECLARE_PLUGIN\([ \t]*"(.+)",[ \t]*(.+)[ \t]*\);?')
-re_plugin_description = re.compile(r'PLUGIN_DESCRIPTION\([ \t]*"(.+)"[ \t]*,[ \t]*"(.+)"[ \t]*\);?')
-re_plugin_add_port = re.compile(r'PLUGIN_ADD_PORT\([ \t]*"(.+)"[ \t]*,[ \t]*([0-9]+)[ \t]*,[ \t]*"(.+)"[ \t]*,[ \t]*"(.+)"[ \t]*\)')
+ccomment = re.compile(r'''(?x)
+(?=["'/])      # trick to make it faster, a kind of anchor
+(?:
+    "(?=((?:[^"\\?]+|\?(?!\?/)|(?:\?\?/|\\)[\s\S])*))\1" # double quotes string
+  |
+    '(?=((?:[^'\\?]+|\?(?!\?/)|(?:\?\?/|\\)[\s\S])*))\2' # single quotes string
+  |
+    (
+        /(?:(?:\?\?/|\\)\n)*/(?:.*(?:\?\?|\\)/\n)*.* # single line comment
+      |
+        /(?:(?:\?\?/|\\)\n)*\*                       # multiline comment
+        (?=((?:[^*]+|\*+(?!(?:(?:\?\?/|\\)\n)*/))*))\4
+        \*(?:(?:\?\?/|\\)\n)*/             
+    )
+)
+''')
 
 def lib_ext(base):
         """for a given base name, returns the name for a library file"""
@@ -15,60 +29,70 @@ def lib_ext(base):
                 return base + '.dll'
         return 'lib' + base + '.so'
 
-def get_shortname(uri):
-        """determine the 'short name' of a plugin using its uri"""
-        return re.sub('#', '_', uri.split('/')[-1])
-
+def get_metacomment(filename):
+        comments = [m[2].strip() for m in ccomment.findall(open(filename).read()) if m[2]]
+        comments = [s for c in comments for s in c.split('\n')]
+        comments = ''.join([re.sub('^\*','',s.strip()) for s in filter(lambda s: not(s.startswith('//') or s.startswith('/*')), comments)])
+        meta = re.search('@lv2cpp\.meta {(.+)}', comments)
+        return json.loads('{' + meta[1] + '}') if meta else None
 
 def scan_infos(dir='../src'):
         """ read c++ code, parsing the macros that determine the plugin's metadata"""
         infos = {}
         for filename in glob.glob(dir + '/**/*.hpp'):
-                with open(filename) as f:
-                        for line in f:
-                                line = line.strip()
-                                if m:= re_declare.match(line):
-                                        infos[m.group(1)] = {'class':m.group(2), 'ports':[], 'description':''}
-                                elif m:= re_plugin_description.match(line):
-                                        infos[m.group(1)]['description'] = m.group(2)
-                                elif m:= re_plugin_add_port.match(line):
-                                        name = m.group(4)
-                                        infos[m.group(1)]['ports'].append({'id':int(m.group(2)), 'type':m.group(3), 'name':name})
-                                        infos[m.group(1)]['ports'][-1]['symbol'] = name.lower()
-        for uri, inf in infos.items():
-                inf['plugin_uri'] = uri
-                inf['plugin_shortname'] = get_shortname(uri)
-                inf['dll_name'] = lib_ext(inf['plugin_shortname'])
-
+                meta = get_metacomment(filename)
+                if meta:
+                        meta['__file__'] = filename
+                        uri = meta['uri']
+                        infos[uri] = meta
+                        if not 'shortname' in meta:
+                                s = os.path.basename(urlparse(meta['uri'].replace('#','-')).path)
+                                meta['shortname'] = s
+                        if not 'dll_name' in meta:
+                                meta['dll_name'] = lib_ext(meta['shortname'])
+                        logging.debug(meta)
         return infos
 
-
-
-def manifest_ttl(config, filename):
+def emit_manifest_ttl(config, filename):
         with open(filename, 'w') as f:
-              f.write("""
-@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-<{plugin_uri}>
-        a lv2:Plugin ;
-        lv2:binary <{dll_name}>  ;
-        rdfs:seeAlso <{plugin_shortname}.ttl> .
-""".format(**config).strip())
 
-def port_decl(port):
-        port['lv2_type'] = {'AUDIO_IN':'a lv2:AudioPort, lv2:InputPort', 'AUDIO_OUT':'a lv2:AudioPort, lv2:OutputPort'}[port['type']]
-        return """
-[
-  {lv2_type} ;
-  lv2:index {id} ;
-  lv2:symbol "{symbol}" ;
-  lv2:name "{name}"
-]""".format(**port)
+                if config['plugin_type'] == 'audio' :
+                        f.write("@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .\n")
+                        f.write("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n")
+                        f.write(f"<{config['uri']}>\n")
+                        f.write(f"      a lv2:Plugin ;\n")
+                        f.write(f"      lv2:binary <{config['dll_name']}>  ;\n")
+                        f.write(f"      rdfs:seeAlso <{config['shortname']}.ttl> .")
+                        
+                elif config['plugin_type'] == 'ui':
+                        f.write("@prefix lv2ui: <http://lv2plug.in/ns/extensions/ui#>.\n")
+                        f.write(f"<{config['uri']}>\n")
+                        f.write(f"      a lv2ui:Qt5UI ;\n")
+                        f.write(f"      lv2ui:binary <{config['dll_name']}>  .")
+                        
 
-def plugin_ttl(config, filename):
+def port_decl(index, port):
+        port['lv2_type'] = {
+                'AUDIO_IN':'a lv2:AudioPort, lv2:InputPort',
+                'AUDIO_OUT':'a lv2:AudioPort, lv2:OutputPort',
+                'MIDI_IN':'a lv2ev:EventPort, lv2:InputPort',
+                'MIDI_OUT':'a lv2ev:EventPort, lv2:OutputPort'
+        }[port['type']]
+        decl = '[\n'
+        decl += f"  {port['lv2_type']} ;\n"
+        decl += f"  lv2:index {index} ;\n"
+        decl += f'''  lv2:symbol "{port['symbol']}" ;\n'''
+        decl += f'''  lv2:name "{port['name']}" ;\n'''
+        if port['lv2_type'] in ['MIDI_IN', 'MIDI_OUT']:
+                decl += '  lv2ev:supportsEvent <http://lv2plug.in/ns/ext/midi#MidiEvent> ;\n'
+        decl+=']'
+        return decl
+
+def emit_audio_ttl(config, filename):
         ttl = """
 @prefix doap:  <http://usefulinc.com/ns/doap#> .
 @prefix lv2:   <http://lv2plug.in/ns/lv2core#> .
+@prefix lv2ev: <http://lv2plug.in/ns/ext/event#>.
 @prefix lv2ui: <http://lv2plug.in/ns/extensions/ui#> .
 @prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
@@ -81,7 +105,7 @@ def plugin_ttl(config, filename):
         foaf:mbox <mailto:julien.rialland@gmail.com> ;
         foaf:homepage <https://github.com/jrialland> .
 
-<{plugin_uri}>
+<{uri}>
         a lv2:Plugin ;
         a doap:Project ;
         doap:name "{description}" ;
@@ -89,27 +113,26 @@ def plugin_ttl(config, filename):
         doap:maintainer <https://github.com/jrialland#me> ;
         lv2:optionalFeature lv2:hardRTCapable ;
 """.format(**config).strip()
-        if config['ports']:
+        if 'ui' in config:
+                ttl += f'''\n        lv2ui:ui <{config['ui']}> ;\n'''
+        if 'ports' in config:
                 ttl += '\nlv2:port'
-                ttl += ', '.join(map(port_decl, config['ports']))
+                ports = [port_decl(i, p) for i,p in enumerate(config['ports'])]
+                ttl += ', '.join(ports)
         ttl += ' .'
-
         with open(filename, 'w') as f:
+                logging.info(filename)
                 f.write(ttl)
-
-def write_manifests(inf, output = '.'):
-        outdir = os.path.join(output, inf['plugin_shortname'] + '.lv2')
-        if not os.path.isdir(outdir):
-                os.makedirs(outdir)
-        manifest_ttl(inf, os.path.join(outdir, 'manifest.ttl'))
-        plugin_ttl(inf, os.path.join(outdir, inf['plugin_shortname']+'.ttl'))
 
 ################################################################################
 if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
-        outdir = sys.argv[-1] if len(sys.argv) > 1 else '.'
-        infos = scan_infos()
-        for uri, inf in infos.items():
-                logging.debug(json.dumps(infos, indent=4, sort_keys=True))
-                write_manifests(inf, outdir)
-        
+        if len(sys.argv) < 2:
+                raise Exception("usage : <script> <outputdir>")
+        for uri, info in scan_infos().items():
+                outputdir = os.path.join(sys.argv[-1], info['shortname'] + '.lv2')
+                if not os.path.isdir(outputdir):
+                        os.makedirs(outputdir)
+                emit_manifest_ttl(info, os.path.join(outputdir, 'manifest.ttl'))
+                if info['plugin_type'] == 'audio':
+                        emit_audio_ttl(info, os.path.join(outputdir, info['shortname'] + '.ttl'))

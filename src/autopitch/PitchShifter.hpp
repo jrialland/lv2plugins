@@ -4,16 +4,14 @@
 
 class PitchShifter {
 
-	int iota = 0;
+  int iota = 0;
 
-	float vec0[131072];
-	
-    float rec0[2];
+  float vec0[131072];
 
-    public:
+  float rec0[2];
 
-        PitchShifter();
+public:
+  PitchShifter();
 
-        void shift(uint32_t nsamples, float* input, float* output, float ratio);
-
+  void shift(uint32_t nsamples, float *input, float *output, float ratio);
 };

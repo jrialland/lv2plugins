@@ -3,19 +3,18 @@
 
 class PitchDetector {
 
-    uint32_t sample_rate;
+  uint32_t sample_rate;
 
-    float* buffer;
+  float *buffer;
 
-    uint32_t buffer_size;
+  uint32_t buffer_size;
 
-    float* get_buffer(uint32_t needed);
+  float *get_buffer(uint32_t needed);
 
-    public:
+public:
+  PitchDetector(uint32_t sample_rate);
 
-    PitchDetector(uint32_t sample_rate);
+  ~PitchDetector();
 
-    ~PitchDetector();
-
-    float detect_pitch(uint32_t nsamples, float* input);
+  float detect_pitch(uint32_t nsamples, float *input);
 };
