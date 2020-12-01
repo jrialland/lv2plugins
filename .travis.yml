@@ -6,6 +6,7 @@ addons:
   apt:
     packages:
     - cmake
+    - catch
     - lv2-dev
     - qt5-default
 
