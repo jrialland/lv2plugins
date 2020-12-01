@@ -6,10 +6,10 @@ addons:
   apt:
     packages:
     - cmake
-    - catch
     - lv2-dev
     - qt5-default
 
 script: 
+  - cd deps/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF & sudo cmake --build build/ --target install
   - mkdir -p build && cd build && cmake .. && cmake --build .
 
