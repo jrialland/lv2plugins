@@ -35,8 +35,7 @@ void AutoPitchPlugin::run(uint32_t nsamples) {
 
   if (pitch > 0) {
     // find the nearest note that is in the current scale
-    Musical::Note target =
-        Musical::getNearestNote("Minor pentatonic", "A", pitch);
+    Musical::Note target = Musical::getNearestNote("Blues", "A", pitch);
     correction = target.freq / pitch;
   }
 

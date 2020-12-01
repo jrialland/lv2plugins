@@ -130,6 +130,11 @@ static const vector<string> tones = {"A",     "A#/Bb", "B",     "C",
                                      "C#/Db", "D",     "D#/Eb", "E",
                                      "F",     "F#/Gb", "G",     "G#/Ab"};
 
+static const map<string, int> toneIds = {
+    {"A", 0},  {"A#", 1}, {"Bb", 1}, {"B", 2},   {"C", 3},  {"C#", 4},
+    {"Db", 4}, {"D", 5},  {"D#", 6}, {"Eb", 6},  {"E", 7},  {"F", 8},
+    {"F#", 9}, {"Gb", 9}, {"G", 10}, {"G#", 11}, {"Ab", 11}};
+
 /**
  * Will receive all the valid notes for each key/scale couples
  */
@@ -139,22 +144,30 @@ Musical::Note::Note(int id_, double freq_) : id(id_), freq(freq_) {}
 
 Musical::Note::Note(const Note &n) : id(n.id), freq(n.freq) {}
 
+string Musical::Note::name() const {
+  auto n = tones[id % 12];
+  if (n.find('/' != string::npos)) {
+    n = n.substr(0, 2);
+  }
+  int octave = id < 3 ? -1 : ((id - 3) / 12);
+  return n + to_string(octave);
+}
+
+ostream &operator<<(ostream &os, const Musical::Note &n) {
+  os << n.name();
+  return os;
+}
+
 /**
  * For a given note name, return the index of the corresponding
  * key on a piano keyboard (lowest octave, starting with id0 = A-1 = 27.5 Hz)
  */
 static inline int getIndexOfTone(const std::string &tone) {
-  int i = tolower(tone[0]) - 'a';
-  if (tone.size() > 1) {
-    char c = tone[1];
-    if (c == '#') {
-      i += 1;
-    } else if (c == 'b') {
-      i -= 1;
-    }
+  auto it = toneIds.find(tone.substr(0, 2));
+  if (it != toneIds.end()) {
+    return it->second;
   }
-  i = i < 0 ? i + 12 : i;
-  return i % 12;
+  throw std::invalid_argument("invalid tone : '" + tone + "'");
 }
 
 /**
@@ -164,10 +177,19 @@ static inline const vector<Musical::Note> &feedNotes(const string &name, int id,
                                                      const vector<int> &itvs) {
   static const double ratio = pow(2, 1.0 / 12);
   vector<Musical::Note> v;
+
+  for (int interval : itvs) {
+    int currentId = id - 12 + interval;
+    if (currentId >= 0) {
+      double freq = 27.5 * pow(ratio, currentId);
+      v.emplace_back(currentId, freq);
+    }
+  }
+
   while (id < 89) {
     for (int interval : itvs) {
       int currentId = id + interval;
-      if (currentId < 89) {
+      if (currentId < 88) {
         double freq = 27.5 * pow(ratio, currentId);
         v.emplace_back(currentId, freq);
       }
@@ -177,8 +199,8 @@ static inline const vector<Musical::Note> &feedNotes(const string &name, int id,
   return notes.emplace(name, v).first->second;
 }
 
-const std::vector<Musical::Note> &Musical::getNotes(const std::string &tone,
-                                                    const std::string &scale) {
+const std::vector<Musical::Note> &Musical::getNotes(const std::string &scale,
+                                                    const std::string &tone) {
   int id = getIndexOfTone(tone);
   string k = scale + "/" + std::to_string(id);
   auto itNotes = notes.find(k);
@@ -194,21 +216,28 @@ const std::vector<Musical::Note> &Musical::getNotes(const std::string &tone,
   }
 }
 
-Musical::Note Musical::getNearestNote(const std::string &scale,
-                                      const std::string &tone, double freq) {
+Musical::Note Musical::getNote(const std::string& name) {
+    auto vec = getNotes("Chromatic", name);
+    for(auto n : vec) {
+        if(n.name().compare(name) == 0) {
+            return n;
+        }
+    }
+    throw std::invalid_argument(string("unknown note : '") + name + "'");
+}
 
+Musical::Note Musical::getNearestNote(const std::vector<Musical::Note> &notes,
+                                      double freq) {
   Musical::Note searched{-1, freq};
-  const auto &validNotes = Musical::getNotes(tone, scale);
-
   // find the first note that is higher than the given freq
   auto it = std::lower_bound(
-      validNotes.begin(), validNotes.end(), searched,
+      notes.begin(), notes.end(), searched,
       [](const Musical::Note &n1, const Musical::Note &n2) -> bool {
         return n1.freq < n2.freq;
       });
 
   // if the preceding note is nearer, select it
-  if (it != validNotes.begin()) {
+  if (it != notes.begin()) {
     double diff = it->freq - freq;
     it--;
     double diffprev = freq - it->freq;
@@ -217,6 +246,12 @@ Musical::Note Musical::getNearestNote(const std::string &scale,
     }
   }
   return *it;
+}
+
+Musical::Note Musical::getNearestNote(const std::string &scale,
+                                      const std::string &tone, double freq) {
+  const auto &validNotes = Musical::getNotes(scale, tone);
+  return getNearestNote(validNotes, freq);
 }
 
 const std::vector<std::string> &Musical::getScales() { return scales; }
