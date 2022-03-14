@@ -13,17 +13,24 @@ This is a work in progress, I'm still figuring out how to code user interfaces
 How to build :
 ---------
 
-The following dependencies should be installed : sudo apt install g++ make cmake lv2-dev
+- The following dependencies should be installed : sudo apt install g++ make cmake lv2-dev qt5-default
 
 ```
 mkdir build
 cd build 
-cmake ..
+cmake .. -G"UNIX Makefiles"
 cmake --build .
 cmake --install .
 ```
 
+- git submodules must be updated in your working copy : `git pull --recurse-submodules` (needed for Catch2 tests)
+
 The compiled plugins will be copied into your ~/.lv2/ folder, ready to be tested.
+
+Running unit tests
+------------------
+From the build directory run `ctest` or `./unittests`
+
 
 Smoke tests on .wav files
 --------------------------

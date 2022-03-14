@@ -21,7 +21,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 set(CMAKE_AUTOMOC ON)
 
 ## Catch2 dependency
-find_package(Catch2 REQUIRED)
+include(CTest)
+include("${CMAKE_SOURCE_DIR}/deps/Catch2/extras/Catch.cmake")
+add_subdirectory("deps/Catch2")
 
 ################################################################################
 # custom build step for generating plugin manifests
@@ -34,9 +36,9 @@ file(GLOB_RECURSE COMMON_AUDIO_SRC ${CMAKE_SOURCE_DIR}/src/common-audio/*.cpp)
 add_executable(unittests ${COMMON_AUDIO_SRC} ${UNITTESTS_SRC})
 target_link_libraries(unittests Catch2::Catch2)
 target_include_directories(unittests PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/deps)
-include(CTest)
-include(Catch)
+enable_testing()
 catch_discover_tests(unittests)
+
 
 ################################################################################
 ## common-audio : Static library for all the lv2 audio-related code
