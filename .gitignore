@@ -11,6 +11,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+#python temporary files
+scripts/venv/
+__pycache__/
+
 # build directory
 build/
 

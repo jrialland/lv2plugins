@@ -10,7 +10,8 @@ if __name__ == '__main__':
     for uri, meta in scan_directory('../src').items():
         plugin = Plugin.from_json(json.dumps(meta))  # type:ignore
         targetdir = os.path.join(builddir, f'{plugin.name}.lv2')
-
+        if not os.path.isdir(targetdir):
+            os.makedirs(targetdir)
         with open(os.path.join(targetdir, 'manifest.ttl'), 'wb') as f:
             g = generate_manifest(plugin)
             g.serialize(destination=f, format='turtle')
