@@ -39,3 +39,6 @@ public:
 
   void run(uint32_t nsamples) override;
 };
+
+#define AUTOPITCH_CHANNEL_IN 0
+#define AUTOPITCH_CHANNEL_OUT 1

@@ -60,7 +60,9 @@ class Port:
     portType: PortType = field(metadata=getattr(PortType, '__metadata__'))
     symbol: str
     name: str
-
+    minimum:float=.0
+    default:float=.0
+    maximum:float=.0
 
 def set_maintainer(root: Graph, subject: URIRef, name: str, homepage: Union[str, None] = None, mbox: Union[str, None] = None):
     b = BNode()
@@ -83,6 +85,14 @@ class Plugin:
     ports: List[Port]
     ui: str
 
+    def has_only_one(self, ofType:PortType)->bool:
+        c = 0
+        for port in self.ports:
+            if port.portType is ofType:
+                c += 1
+            if c > 1:
+                return False
+        return c == 1
 
 def generate_audio_plugin_desc(plugin: Plugin) -> Graph:
     g = Graph()
@@ -115,6 +125,14 @@ def generate_audio_plugin_desc(plugin: Plugin) -> Graph:
         g.add((portNode, lv2.name, Literal(port.name, lang="en")))
         g.add((portNode, lv2['index'], Literal(i))),  # type:ignore
         g.add((pluginuri, lv2.port, portNode))
+        if port.portType is PortType.CONTROL_IN:
+            assert port.minimum <= port.default <= port.maximum
+            g.add((portNode, lv2.type, lv2.ControlPort))
+            g.add((portNode, lv2.default, Literal(port.default)))
+            g.add((portNode, lv2.minimum, Literal(port.minimum)))
+            g.add((portNode, lv2.maximum, Literal(port.maximum)))
+        if port.portType is PortType.MIDI_IN and plugin.has_only_one(PortType.MIDI_IN):
+            g.add((portNode, lv2.designation, lv2.control)) # This is necessary since it is possible to have several MIDI input ports, though typically it is best to have one.
     return g
 
 

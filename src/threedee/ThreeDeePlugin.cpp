@@ -23,17 +23,26 @@ void ThreeDeePlugin::setPosition(float azimuth, float elevation, float distance)
 
 void ThreeDeePlugin::run(uint32_t nsamples)
 {
+    float azimuth = get_port_value<THREEDEE_CONTROL_AZIMUTH>();
+    float elevation = get_port_value<THREEDEE_CONTROL_AZIMUTH>();
+    float distance = get_port_value<THREEDEE_CONTROL_AZIMUTH>();
 
-    float *input_buffer = get_buffer<float>(0);
+    // detect if there is a position change
+    if(azimuth != position.fAzimuth || elevation != position.fElevation || distance != position.fDistance) {
+        setPosition(azimuth, elevation, distance);
+    }
+
+    float *input_buffer = get_buffer<THREEDEE_CHANNEL_IN>();
     // Encode signal into BFormat buffer
     encoder.Process(input_buffer, nsamples, &fmt);
 
-    float *output_buffers[2];
-    output_buffers[0] = get_buffer<float>(1); // left channel
-    output_buffers[1] = get_buffer<float>(2); // right channel
-
+    float *output_buffers[] = {
+        get_buffer<THREEDEE_CHANNEL_OUT_LEFT>(),
+        get_buffer<THREEDEE_CHANNEL_OUT_RIGHT>()
+    };
+    
     // Decode to get the speaker feeds
-    decoder.Process(&fmt, 512, output_buffers);
+    decoder.Process(&fmt, nsamples, output_buffers);
 }
 
 ThreeDeePlugin::~ThreeDeePlugin()
