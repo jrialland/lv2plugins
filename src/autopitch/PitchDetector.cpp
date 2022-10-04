@@ -163,7 +163,7 @@ float Yin_parabolicInterpolation(Yin *yin, int16_t tauEstimate) {
 }
 
 /**
- * Runs the Yin pitch detection algortihm
+ * Runs the Yin pitch detection algorithm
  * @param  yin    Initialised Yin object
  * @param  buffer Buffer of samples to analyse
  * @return        Fundamental frequency of the signal in Hz. Returns -1 if pitch

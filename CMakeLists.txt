@@ -5,29 +5,44 @@ project(lv2plugins
 
 ################################################################################
 ## Compiler setup
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 ################################################################################
 ##Configuring dependencies
+include(FetchContent)
+
+## libspatialaudio
+FetchContent_Declare(
+libspatialaudio
+  GIT_REPOSITORY https://github.com/videolabs/libspatialaudio.git
+  GIT_TAG        0.3.0
+)
+
+FetchContent_MakeAvailable(libspatialaudio)
 
 # LV2 dependency
 find_package(LV2 REQUIRED)
-
-## Qt5 dependency
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
-set(CMAKE_AUTOMOC ON)
 
 ## Catch2 dependency
 include(CTest)
 include("${CMAKE_SOURCE_DIR}/deps/Catch2/extras/Catch.cmake")
 add_subdirectory("deps/Catch2")
 
+function(dump_cmake_variables)
+    get_cmake_property(_variableNames VARIABLES)
+    list (SORT _variableNames)
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+endfunction()
+
+dump_cmake_variables()
+
 ################################################################################
 # custom build step for generating plugin manifests
-add_custom_target(generate_manifest COMMAND ${CMAKE_SOURCE_DIR}/scripts/generate_manifest.py ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_target(generate_manifest COMMAND ${CMAKE_SOURCE_DIR}/scripts/generate_manifest.sh ${CMAKE_CURRENT_BINARY_DIR})
 
 ################################################################################
 ## Unit tests
@@ -48,13 +63,6 @@ target_include_directories(common-audio PRIVATE ${CMAKE_SOURCE_DIR}/deps)
 set_target_properties(common-audio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 ################################################################################
-## common-ui : Static library for all the lv2 ui-related code
-file(GLOB_RECURSE COMMON_UI_SRC ${CMAKE_SOURCE_DIR}/src/common-ui/*.cpp)
-add_library(common-ui STATIC ${COMMON_UI_SRC})
-set_target_properties(common-ui PROPERTIES POSITION_INDEPENDENT_CODE ON)
-qt5_use_modules(common-ui Widgets)
-
-################################################################################
 ###############
 ## Autopitch ##
 ###############
@@ -67,11 +75,19 @@ target_link_libraries(autopitch PRIVATE common-audio)
 add_dependencies(autopitch generate_manifest)
 install(DIRECTORY ${PROJECT_BINARY_DIR}/autopitch.lv2 DESTINATION $ENV{HOME}/.lv2)
 
-file(GLOB_RECURSE AUTOPITCH_UI_SRC ${CMAKE_SOURCE_DIR}/src/autopitch-UI/*.cpp)
-add_library(autopitch-UI MODULE ${AUTOPITCH_UI_SRC})
-target_include_directories(autopitch-UI PRIVATE ${CMAKE_SOURCE_DIR}/src)
-set_target_properties(autopitch-UI PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/autopitch-UI.lv2)
-target_link_libraries(autopitch-UI PRIVATE common-ui)
-add_dependencies(autopitch-UI generate_manifest)
-install(DIRECTORY ${PROJECT_BINARY_DIR}/autopitch-UI.lv2 DESTINATION $ENV{HOME}/.lv2)
+
+################################################################################
+###############
+## ThreeDee ##
+###############
+
+file(GLOB_RECURSE THREEDEE_SRC ${CMAKE_SOURCE_DIR}/src/threedee/*.cpp)
+add_library(threedee MODULE ${THREEDEE_SRC})
+target_include_directories(threedee PRIVATE ${CMAKE_SOURCE_DIR}/src ${libspatialaudio_SOURCE_DIR}/include)
+set_target_properties(threedee PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/threedee.lv2)
+target_link_libraries(threedee PRIVATE common-audio ${spatialaudio_BINARY_DIR}/libspatialaudio.a)
+add_dependencies(threedee generate_manifest)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/threedee.lv2 DESTINATION $ENV{HOME}/.lv2)
+
+
 

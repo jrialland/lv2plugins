@@ -10,11 +10,12 @@
  *
  * @lv2cpp.meta {
  *    "uri" : "https://github.com/jrialland/lv2plugins/autopitch",
- *    "plugin_type" : "audio",
+ *    "name" : "AutoPitch",
+ *    "pluginType" : "AUDIO",
  *    "description" : "Automatic pitch correction",
  *    "ports" : [
- *      {"type":"AUDIO_IN", "symbol":"in", "name":"Audio In"},
- *      {"type":"AUDIO_OUT", "symbol":"out", "name":"Audio Out"}
+ *      {"portType":"AUDIO_IN", "symbol":"in", "name":"Audio In"},
+ *      {"portType":"AUDIO_OUT", "symbol":"out", "name":"Audio Out"}
  *    ],
  *    "ui" : "https://github.com/jrialland/lv2plugins/autopitch#UI"
  * }

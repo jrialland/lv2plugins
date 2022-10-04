@@ -32,7 +32,8 @@ void AutoPitchPlugin::run(uint32_t nsamples) {
   float *output = get_buffer<float>(1);
 
   float pitch = pitchDetector->detect_pitch(nsamples, input);
-
+  
+  std::cerr << pitch << std::endl;
   if (pitch > 0) {
     // find the nearest note that is in the current scale
     Musical::Note target = Musical::getNearestNote("Blues", "A", pitch);
