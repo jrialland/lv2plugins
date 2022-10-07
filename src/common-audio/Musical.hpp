@@ -31,7 +31,7 @@ public:
    * @return All the notes on a grand piano which belong to a particular scale
    */
   static const std::vector<Musical::Note> &getNotes(const std::string &scale,
-                                                    const std::string &tone);
+                                                    const std::string &key);
 
   /**
    * the array must be sorted by ascending frequencies
@@ -43,7 +43,7 @@ public:
   /**
    * the nearest note in a scale
    */
-  static Note getNearestNote(const std::string &scale, const std::string &tone,
+  static Note getNearestNote(const std::string &scale, const std::string &key,
                              double freq);
 };
 

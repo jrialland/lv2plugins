@@ -200,8 +200,8 @@ static inline const vector<Musical::Note> &feedNotes(const string &name, int id,
 }
 
 const std::vector<Musical::Note> &Musical::getNotes(const std::string &scale,
-                                                    const std::string &tone) {
-  int id = getIndexOfTone(tone);
+                                                    const std::string &key) {
+  int id = getIndexOfTone(key);
   string k = scale + "/" + std::to_string(id);
   auto itNotes = notes.find(k);
   if (itNotes == notes.end()) {
@@ -249,8 +249,8 @@ Musical::Note Musical::getNearestNote(const std::vector<Musical::Note> &notes,
 }
 
 Musical::Note Musical::getNearestNote(const std::string &scale,
-                                      const std::string &tone, double freq) {
-  const auto &validNotes = Musical::getNotes(scale, tone);
+                                      const std::string &key, double freq) {
+  const auto &validNotes = Musical::getNotes(scale, key);
   return getNearestNote(validNotes, freq);
 }
 
