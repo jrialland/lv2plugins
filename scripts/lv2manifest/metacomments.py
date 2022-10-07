@@ -4,7 +4,6 @@ import os
 import glob
 import json
 from urllib.parse import urlparse
-import logging
 
 # a regular expression that parses comments in C++ files
 ccomment = re.compile(r'''(?x)
@@ -26,6 +25,7 @@ ccomment = re.compile(r'''(?x)
 
 
 def get_metacomment(fd: Union[str, TextIO]) -> Union[str, None]:
+    """ read json data embedded in class comments"""
     if type(fd) == str:
         with open(str(fd)) as f:
             filedata = f.read()
@@ -53,5 +53,4 @@ def scan_directory(dirname: str):
                 meta['name'] = os.path.basename(
                     urlparse(meta['uri'].replace('#', '-')).path)
             meta['name'] = meta['name'].lower()
-            logging.debug(meta)
     return infos
