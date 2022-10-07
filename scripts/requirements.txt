@@ -1,0 +1,5 @@
+dataclasses-json>=0.5.7
+rdflib>=6.2.0
+numpy>=1.23.3
+jupyter>=1.0.0
+matplotlib>=3.6.0
