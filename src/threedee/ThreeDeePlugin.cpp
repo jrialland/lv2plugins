@@ -5,6 +5,9 @@
 
 #include "ThreeDeePlugin.hpp"
 
+EXPORT_AUDIO_PLUGIN("https://github.com/jrialland/lv2plugins/threedee",
+                    ThreeDeePlugin);
+
 ThreeDeePlugin::ThreeDeePlugin()
 {
     encoder.Configure(1, true, 0);
