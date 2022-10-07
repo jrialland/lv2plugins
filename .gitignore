@@ -12,8 +12,10 @@ CTestTestfile.cmake
 _deps
 
 #python temporary files
-scripts/venv/
+venv/
+.venv/
 __pycache__/
+.ipynb_checkpoints/
 
 # build directory
 build/
