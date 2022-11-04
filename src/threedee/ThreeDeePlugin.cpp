@@ -7,12 +7,6 @@ using namespace std;
 #include "ThreeDeePlugin.hpp"
 #include <cmath>
 
-void ThreeDeePlugin::setPosition(float radius_, float angle_)
-{
-        radius = radius_;
-        angle = angle_;
-}
-
 void ThreeDeePlugin::set_sample_rate(double rate)
 {
     fConst0 = expf(0.0f - 5e+01f / fminf(1.92e+05f, fmaxf(1.0f, rate)));
@@ -24,8 +18,9 @@ void ThreeDeePlugin::run(uint32_t nsamples)
     float *input0 = get_buffer<THREEDEE_CHANNEL_IN>();
     float *output0 = get_buffer<THREEDEE_CHANNEL_OUT_LEFT>();
     float *output1 = get_buffer<THREEDEE_CHANNEL_OUT_RIGHT>();
-    float fSlow0 = fConst1 * radius;
-    float fSlow1 = fConst1 * angle;
+
+    float fSlow0 = fConst1 * get_port_value<THREEDEE_CONTROL_RADIUS>();
+    float fSlow1 = fConst1 * get_port_value<THREEDEE_CONTROL_ANGLE>();
 
     int i0;
     for (i0 = 0; i0 < nsamples; i0 = i0 + 1)

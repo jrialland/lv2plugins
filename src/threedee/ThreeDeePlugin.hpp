@@ -26,17 +26,12 @@ class ThreeDeePlugin : public lv2cpp::Lv2AudioPlugin
 
     float fConst0, fConst1, fRec0[2], fRec1[2];
 
-    float radius = 1.0;
-
-    float angle = 0;
-
 public:
 
     void set_sample_rate(double rate) override;
 
     void run(uint32_t nsamples) override;
 
-    void setPosition(float radius, float angle);
 };
 
 #define THREEDEE_CHANNEL_IN 0
