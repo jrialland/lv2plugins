@@ -5,7 +5,7 @@
 #include <iostream>
 using namespace std;
 
-TEST_CASE("", "[FFT]") {
+TEST_CASE("fft", "[FFT]") {
 
   FFT fft;
 

@@ -13,7 +13,7 @@ __status__ = "Production"
 
 import sys
 
-from ctypes import Structure, CDLL, POINTER, CFUNCTYPE
+from ctypes import Structure, CDLL, POINTER, CFUNCTYPE, c_int32
 from ctypes import c_bool, c_double, c_float, c_int, c_size_t, c_uint, c_uint32
 from ctypes import c_char, c_char_p, c_void_p
 from ctypes import byref, cast
@@ -135,6 +135,28 @@ class LV2_URID_Unmap(Structure):
         ("unmap", CFUNCTYPE(c_char_p, LV2_URID_Unmap_Handle, LV2_URID)),
     ]
 
+
+
+class LV2_Options_Option(Structure):
+    __slots__ = ["context", "subject", "key", "size", "type", "value"]
+    _fields_ = [
+        ("context", c_int),
+        ("subject", c_uint32),
+        ("key", LV2_URID),
+        ("size", c_uint32),
+        ("type", LV2_URID),
+        ("value", c_void_p),
+    ]
+
+LV2_Option_Get_Type = CFUNCTYPE(c_uint32, LV2_Handle, POINTER(LV2_Options_Option))
+LV2_Option_Set_Type = CFUNCTYPE(c_uint32, LV2_Handle, POINTER(LV2_Options_Option))
+
+class LV2_Options_Interface(Structure):
+    __slots__ = ["get", "set"]
+    _fields_ = [
+        ("get", LV2_Option_Get_Type),
+        ("set", LV2_Option_Set_Type),
+    ]
 
 # Lilv types
 

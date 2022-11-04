@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 #include <vector>
-
+#include <iostream>
 #include "lv2/lv2plug.in/ns/ext/urid/urid.h"
 
 namespace lv2cpp
@@ -32,7 +32,7 @@ namespace lv2cpp
     std::vector<Lv2Port> ports;
 
     /** loaded schemas */
-    std::map<std::string, LV2_URID> urids;
+    LV2_URID_Map *map;
 
     /** shorcut to the "Blank" type */
     LV2_URID atom_Blank;
@@ -79,14 +79,22 @@ namespace lv2cpp
     template <int n>
     float *get_buffer()
     {
-      return (float*)ports.at(n).buffer;
+      return (float *)ports.at(n).buffer;
     }
 
     /** obtain a control value (CONTROL_IN ports) */
     template <int n>
     float get_port_value()
     {
-      return *((float *)ports.at(n).buffer);
+      using namespace std;
+      if (ports.at(n).buffer == nullptr)
+      {
+        return .0;
+      }
+      else
+      {
+        return *((float *)ports.at(n).buffer);
+      }
     }
 
     /** process the incoming events from an incoming event port*/
@@ -125,7 +133,7 @@ namespace lv2cpp
     {                                                                            \
       lv2cpp::Lv2AudioPlugin *plugin = new className();                          \
       plugin->init_features(bundle_path, features);                              \
-      plugin->set_sample_rate(rate);                                           \
+      plugin->set_sample_rate(rate);                                             \
       return static_cast<LV2_Handle>(plugin);                                    \
     }                                                                            \
                                                                                  \
@@ -176,6 +184,6 @@ namespace lv2cpp
       return index == 0 ? &plugin_descriptor : nullptr;                          \
     }                                                                            \
   } // extern "C"
-////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////
 
 } // namespace lv2cpp

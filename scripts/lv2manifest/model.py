@@ -106,6 +106,7 @@ def generate_audio_plugin_desc(plugin: Plugin) -> Graph:
     g.add((pluginuri, DOAP.name, Literal(plugin.name)))
     g.add((pluginuri, lv2.binary, URIRef(lib_ext(plugin.name))))
     g.add((pluginuri, lv2.description, Literal(plugin.description, lang="en")))
+    g.add((pluginuri, lv2.requiredFeature, URIRef("http://lv2plug.in/ns/ext/urid#map")))
     g.add((pluginuri, lv2.optionalFeature, lv2.hardRTCapable))
     for i, port in enumerate(plugin.ports):
         portNode = BNode()
@@ -116,7 +117,7 @@ def generate_audio_plugin_desc(plugin: Plugin) -> Graph:
         if port.portType in [PortType.AUDIO_IN, PortType.MIDI_IN, PortType.CONTROL_IN]:
             g.add((portNode, RDF.type, lv2.InputPort))
         else:
-            g.add((portNode, RDF.type, lv2.Outputport))
+            g.add((portNode, RDF.type, lv2.OutputPort))
         if port.portType in [PortType.AUDIO_IN, PortType.AUDIO_OUT]:
             g.add((portNode, RDF.type, lv2.AudioPort))
         elif port.portType in [PortType.MIDI_IN, PortType.MIDI_OUT]:

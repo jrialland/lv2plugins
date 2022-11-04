@@ -15,7 +15,7 @@ if __name__ == "__main__":
     else:
         builddir = sys.argv[1]
     logging.debug(f"builddir : {builddir}")
-    sourcedir = os.path.join(builddir, "..", "src")
+    sourcedir = os.path.realpath(os.path.join(builddir, "..", "src"))
     logging.debug(f"sourcedir : {sourcedir}")
     found_annotations = scan_directory(sourcedir)
     if not found_annotations:

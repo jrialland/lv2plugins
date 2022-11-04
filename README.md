@@ -67,4 +67,4 @@ Plugins
 -------
 
 * Autopitch : slightly changes the pitch of voices, so you can sound like Cher
-* ThreeDee : 3D audio, allow to simulate the "position" of an audio input relative to the listener's space
+* ThreeDee : OpenAL-enabled 3D audio, allow to simulate the "position" of an audio input relative to the listener's space

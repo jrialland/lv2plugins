@@ -1,9 +1,10 @@
 
 #include "Lv2AudioPlugin.hpp"
-
 #include "lv2/lv2plug.in/ns/ext/atom/atom.h"
 #include "lv2/lv2plug.in/ns/ext/atom/util.h"
 #include "lv2/lv2plug.in/ns/ext/midi/midi.h"
+
+#include <stdexcept>
 
 namespace lv2cpp
 {
@@ -18,32 +19,20 @@ namespace lv2cpp
 
     path = bundle_path;
 
-    LV2_URID_Map *map = nullptr;
-    for (int i = 0; features[i]; i += 1)
+    for (int i = 0; features[i] != nullptr; i += 1)
     {
-      map = (LV2_URID_Map *)features[i]->data;
+      if (std::string(LV2_URID_MAP_URI).compare(features[i]->URI) == 0)
+      {
+        map = (LV2_URID_Map *)features[i]->data;
+        atom_Blank = map->map(map->handle, LV2_ATOM__Blank);
+        atom_String = map->map(map->handle, LV2_ATOM__String);
+        atom_MidiEvent = map->map(map->handle, LV2_MIDI__MidiEvent);
+      }
     }
-    if (map)
+
+    if (map == nullptr)
     {
-
-      LV2_URID urid;
-
-      urid = map->map(map->handle, LV2_ATOM__Blank);
-      urids.insert(std::pair<std::string, LV2_URID>("Blank", urid));
-      atom_Blank = urid;
-
-      urid = map->map(map->handle, LV2_ATOM__String);
-      urids.insert(std::pair<std::string, LV2_URID>("String", urid));
-      atom_String = urid;
-
-      urid = map->map(map->handle, LV2_ATOM__Float);
-      urids.insert(std::pair<std::string, LV2_URID>("Float", urid));
-
-      urid = map->map(map->handle, LV2_MIDI__MidiEvent);
-      urids.insert(std::pair<std::string, LV2_URID>("MidiEvent", urid));
-      atom_MidiEvent = urid;
-
-      // TODO add other well-known urids
+      throw std::runtime_error("Required feature <" LV2_URID_MAP_URI "> was not provided");
     }
   }
 
@@ -57,17 +46,14 @@ namespace lv2cpp
 
   void Lv2AudioPlugin::_add_port_(int n, void *buffer)
   {
-    if (buffer != nullptr)
+    if (ports.size() == n)
     {
       Lv2Port p{n, buffer};
-      if (n == ports.size())
-      {
-        ports.push_back(p);
-      }
-      else
-      {
-        ports.insert(ports.begin(), n, p);
-      }
+      ports.push_back(p);
+    }
+    else
+    {
+      ports.at(n).buffer = buffer;
     }
   }
 
